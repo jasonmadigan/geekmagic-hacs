@@ -146,6 +146,66 @@ class Renderer:
         if fill_width > 0:
             draw.rectangle((x1, y1, x1 + fill_width, y2), fill=color)
 
+    def _interpolate_catmull_rom(
+        self, points: list[tuple[float, float]], num_points: int = 100
+    ) -> list[tuple[float, float]]:
+        """Interpolate points using Catmull-Rom spline for smooth curves.
+
+        Args:
+            points: List of (x, y) control points
+            num_points: Number of output points
+
+        Returns:
+            Smoothly interpolated points
+        """
+        if len(points) < 2:
+            return points
+        if len(points) == 2:
+            # Linear interpolation for 2 points
+            result = []
+            for i in range(num_points):
+                t = i / (num_points - 1)
+                x = points[0][0] + t * (points[1][0] - points[0][0])
+                y = points[0][1] + t * (points[1][1] - points[0][1])
+                result.append((x, y))
+            return result
+
+        # Add phantom points at start and end for Catmull-Rom
+        pts = [points[0], *points, points[-1]]
+        result = []
+
+        # Generate points along the spline
+        segments = len(pts) - 3
+        points_per_segment = max(1, num_points // segments)
+
+        for i in range(segments):
+            p0, p1, p2, p3 = pts[i], pts[i + 1], pts[i + 2], pts[i + 3]
+
+            for j in range(points_per_segment):
+                t = j / points_per_segment
+
+                # Catmull-Rom spline formula
+                t2 = t * t
+                t3 = t2 * t
+
+                x = 0.5 * (
+                    (2 * p1[0])
+                    + (-p0[0] + p2[0]) * t
+                    + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2
+                    + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3
+                )
+                y = 0.5 * (
+                    (2 * p1[1])
+                    + (-p0[1] + p2[1]) * t
+                    + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2
+                    + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3
+                )
+                result.append((x, y))
+
+        # Add final point
+        result.append(pts[-2])
+        return result
+
     def draw_sparkline(
         self,
         draw: ImageDraw.ImageDraw,
@@ -153,6 +213,7 @@ class Renderer:
         data: list[float],
         color: tuple[int, int, int] = COLOR_CYAN,
         fill: bool = True,
+        smooth: bool = True,
     ) -> None:
         """Draw a sparkline chart.
 
@@ -162,6 +223,7 @@ class Renderer:
             data: List of data points
             color: Line color
             fill: Whether to fill area under the line
+            smooth: Whether to use spline interpolation for smooth curves
         """
         if not data or len(data) < 2:
             return
@@ -175,12 +237,20 @@ class Renderer:
         max_val = max(data)
         range_val = max_val - min_val if max_val != min_val else 1
 
-        # Calculate points
-        points = []
+        # Calculate control points
+        control_points: list[tuple[float, float]] = []
         for i, value in enumerate(data):
             x = x1 + (i / (len(data) - 1)) * width
             y = y2 - ((value - min_val) / range_val) * height
-            points.append((x, y))
+            control_points.append((x, y))
+
+        # Interpolate for smooth curves
+        if smooth and len(control_points) >= 3:
+            # More interpolation points for wider charts
+            num_points = max(50, width // 2)
+            points = self._interpolate_catmull_rom(control_points, num_points)
+        else:
+            points = control_points
 
         # Draw filled area if requested
         if fill:

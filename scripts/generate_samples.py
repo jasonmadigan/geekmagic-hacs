@@ -185,9 +185,10 @@ class HighQualityRenderer(Renderer):
         data: list[float],
         color: tuple[int, int, int] = COLOR_CYAN,
         fill: bool = True,
+        smooth: bool = True,
     ) -> None:
         """Draw sparkline with scaled dimensions."""
-        super().draw_sparkline(draw, self._scale_rect(rect), data, color, fill)
+        super().draw_sparkline(draw, self._scale_rect(rect), data, color, fill, smooth)
 
     def draw_rounded_rect(
         self,
