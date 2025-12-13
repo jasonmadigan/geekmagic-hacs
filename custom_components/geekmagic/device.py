@@ -65,7 +65,8 @@ class GeekMagicDevice:
         session = await self._get_session()
         async with session.get(f"{self.base_url}/app.json") as response:
             response.raise_for_status()
-            data = await response.json()
+            # Device returns text/plain content type, so we need to accept any
+            data = await response.json(content_type=None)
             return DeviceState(
                 theme=data.get("theme", 0),
                 brightness=data.get("brt"),
@@ -81,7 +82,8 @@ class GeekMagicDevice:
         session = await self._get_session()
         async with session.get(f"{self.base_url}/space.json") as response:
             response.raise_for_status()
-            data = await response.json()
+            # Device returns text/plain content type, so we need to accept any
+            data = await response.json(content_type=None)
             return SpaceInfo(
                 total=data.get("total", 0),
                 free=data.get("free", 0),
@@ -148,11 +150,17 @@ class GeekMagicDevice:
         )
 
         session = await self._get_session()
-        async with session.post(
-            f"{self.base_url}/doUpload?dir=/image/",
-            data=form,
-        ) as response:
-            response.raise_for_status()
+        try:
+            async with session.post(
+                f"{self.base_url}/doUpload?dir=/image/",
+                data=form,
+            ) as response:
+                response.raise_for_status()
+        except aiohttp.ClientResponseError as e:
+            # Device returns malformed HTTP (duplicate Content-Length headers)
+            # but upload still succeeds, so ignore 400 errors from parsing
+            if e.status != 400 or "Duplicate Content-Length" not in str(e.message):
+                raise
 
         _LOGGER.debug("Uploaded %s (%d bytes)", filename, len(image_data))
 
