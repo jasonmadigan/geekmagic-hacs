@@ -48,18 +48,19 @@ class HeroLayout(Layout):
 
         # Hero section
         hero_height = int(available_height * self.hero_ratio)
-        footer_height = available_height - hero_height
 
         # Hero slot (index 0)
-        self.slots.append(Slot(
-            index=0,
-            rect=(
-                self.padding,
-                self.padding,
-                self.width - self.padding,
-                self.padding + hero_height,
-            ),
-        ))
+        self.slots.append(
+            Slot(
+                index=0,
+                rect=(
+                    self.padding,
+                    self.padding,
+                    self.width - self.padding,
+                    self.padding + hero_height,
+                ),
+            )
+        )
 
         # Footer slots
         footer_width = (available_width - (self.footer_slots - 1) * self.gap) // self.footer_slots

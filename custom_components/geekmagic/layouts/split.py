@@ -55,55 +55,61 @@ class SplitLayout(Layout):
         if self.horizontal:
             # Top/bottom split
             top_height = int((available_height + self.gap) * self.ratio) - self.gap // 2
-            bottom_height = available_height - top_height
 
             # Top slot
-            self.slots.append(Slot(
-                index=0,
-                rect=(
-                    self.padding,
-                    self.padding,
-                    self.width - self.padding,
-                    self.padding + top_height,
-                ),
-            ))
+            self.slots.append(
+                Slot(
+                    index=0,
+                    rect=(
+                        self.padding,
+                        self.padding,
+                        self.width - self.padding,
+                        self.padding + top_height,
+                    ),
+                )
+            )
 
             # Bottom slot
-            self.slots.append(Slot(
-                index=1,
-                rect=(
-                    self.padding,
-                    self.padding + top_height + self.gap,
-                    self.width - self.padding,
-                    self.height - self.padding,
-                ),
-            ))
+            self.slots.append(
+                Slot(
+                    index=1,
+                    rect=(
+                        self.padding,
+                        self.padding + top_height + self.gap,
+                        self.width - self.padding,
+                        self.height - self.padding,
+                    ),
+                )
+            )
         else:
             # Left/right split
             left_width = int((available_width + self.gap) * self.ratio) - self.gap // 2
-            right_width = available_width - left_width
 
             # Left slot
-            self.slots.append(Slot(
-                index=0,
-                rect=(
-                    self.padding,
-                    self.padding,
-                    self.padding + left_width,
-                    self.height - self.padding,
-                ),
-            ))
+            self.slots.append(
+                Slot(
+                    index=0,
+                    rect=(
+                        self.padding,
+                        self.padding,
+                        self.padding + left_width,
+                        self.height - self.padding,
+                    ),
+                )
+            )
 
             # Right slot
-            self.slots.append(Slot(
-                index=1,
-                rect=(
-                    self.padding + left_width + self.gap,
-                    self.padding,
-                    self.width - self.padding,
-                    self.height - self.padding,
-                ),
-            ))
+            self.slots.append(
+                Slot(
+                    index=1,
+                    rect=(
+                        self.padding + left_width + self.gap,
+                        self.padding,
+                        self.width - self.padding,
+                        self.height - self.padding,
+                    ),
+                )
+            )
 
 
 class ThreeColumnLayout(Layout):
@@ -143,14 +149,16 @@ class ThreeColumnLayout(Layout):
         for i, ratio in enumerate(self.ratios):
             col_width = int(available_width * (ratio / total_ratio))
 
-            self.slots.append(Slot(
-                index=i,
-                rect=(
-                    x,
-                    self.padding,
-                    x + col_width,
-                    self.height - self.padding,
-                ),
-            ))
+            self.slots.append(
+                Slot(
+                    index=i,
+                    rect=(
+                        x,
+                        self.padding,
+                        x + col_width,
+                        self.height - self.padding,
+                    ),
+                )
+            )
 
             x += col_width + self.gap

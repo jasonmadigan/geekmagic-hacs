@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from PIL import ImageDraw
     from homeassistant.core import HomeAssistant
+    from PIL import ImageDraw
 
     from ..renderer import Renderer
 
@@ -66,7 +66,6 @@ class Widget(ABC):
             rect: (x1, y1, x2, y2) bounding box
             hass: Home Assistant instance for entity states
         """
-        pass
 
     def get_entity_state(self, hass: HomeAssistant | None, entity_id: str | None = None) -> Any:
         """Get the state of an entity.

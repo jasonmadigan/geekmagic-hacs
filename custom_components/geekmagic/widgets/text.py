@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..const import COLOR_WHITE, COLOR_GRAY
+from ..const import COLOR_GRAY, COLOR_WHITE
 from .base import Widget, WidgetConfig
 
 if TYPE_CHECKING:
-    from PIL import ImageDraw
     from homeassistant.core import HomeAssistant
+    from PIL import ImageDraw
 
     from ..renderer import Renderer
 

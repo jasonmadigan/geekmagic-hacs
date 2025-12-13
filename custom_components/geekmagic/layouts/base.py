@@ -6,11 +6,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from ..const import DISPLAY_WIDTH, DISPLAY_HEIGHT
+from ..const import DISPLAY_HEIGHT, DISPLAY_WIDTH
 
 if TYPE_CHECKING:
-    from PIL import ImageDraw
     from homeassistant.core import HomeAssistant
+    from PIL import ImageDraw
 
     from ..renderer import Renderer
     from ..widgets.base import Widget
@@ -45,7 +45,6 @@ class Layout(ABC):
     @abstractmethod
     def _calculate_slots(self) -> None:
         """Calculate the slot rectangles. Override in subclasses."""
-        pass
 
     def get_slot_count(self) -> int:
         """Return the number of widget slots."""

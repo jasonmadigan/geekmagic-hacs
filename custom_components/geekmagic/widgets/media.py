@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..const import COLOR_WHITE, COLOR_GRAY, COLOR_CYAN
+from ..const import COLOR_CYAN, COLOR_GRAY, COLOR_WHITE
 from .base import Widget, WidgetConfig
 
 if TYPE_CHECKING:
-    from PIL import ImageDraw
     from homeassistant.core import HomeAssistant
+    from PIL import ImageDraw
 
     from ..renderer import Renderer
 
@@ -41,7 +41,6 @@ class MediaWidget(Widget):
         """
         x1, y1, x2, y2 = rect
         width = x2 - x1
-        height = y2 - y1
         center_x = x1 + width // 2
         padding = 10
 
@@ -64,9 +63,9 @@ class MediaWidget(Widget):
         # Truncate text if needed
         max_chars = (width - padding * 2) // 8
         if len(title) > max_chars:
-            title = title[:max_chars - 2] + ".."
+            title = title[: max_chars - 2] + ".."
         if len(artist) > max_chars:
-            artist = artist[:max_chars - 2] + ".."
+            artist = artist[: max_chars - 2] + ".."
 
         # Calculate positions
         current_y = y1 + 15
@@ -108,7 +107,7 @@ class MediaWidget(Widget):
         # Draw album
         if self.show_album and album:
             if len(album) > max_chars:
-                album = album[:max_chars - 2] + ".."
+                album = album[: max_chars - 2] + ".."
             renderer.draw_text(
                 draw,
                 album,
@@ -203,7 +202,6 @@ class MediaWidget(Widget):
             minutes = (seconds % 3600) // 60
             secs = seconds % 60
             return f"{hours}:{minutes:02d}:{secs:02d}"
-        else:
-            minutes = seconds // 60
-            secs = seconds % 60
-            return f"{minutes}:{secs:02d}"
+        minutes = seconds // 60
+        secs = seconds % 60
+        return f"{minutes}:{secs:02d}"

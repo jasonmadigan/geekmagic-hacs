@@ -6,8 +6,8 @@ from .hero import HeroLayout
 from .split import SplitLayout
 
 __all__ = [
-    "Layout",
     "GridLayout",
     "HeroLayout",
+    "Layout",
     "SplitLayout",
 ]

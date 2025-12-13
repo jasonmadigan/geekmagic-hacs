@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..const import COLOR_WHITE, COLOR_GRAY, COLOR_CYAN
+from ..const import COLOR_CYAN, COLOR_GRAY
 from .base import Widget, WidgetConfig
 
 if TYPE_CHECKING:
-    from PIL import ImageDraw
     from homeassistant.core import HomeAssistant
+    from PIL import ImageDraw
 
     from ..renderer import Renderer
 
@@ -61,7 +61,7 @@ class EntityWidget(Widget):
         # Truncate name if too long
         max_name_len = width // 8  # Approximate characters that fit
         if len(name) > max_name_len:
-            name = name[:max_name_len - 2] + ".."
+            name = name[: max_name_len - 2] + ".."
 
         # Calculate positions
         value_y = center_y if not self.show_name else center_y - 5

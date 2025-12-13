@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST
@@ -76,9 +75,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def async_options_update_listener(
-    hass: HomeAssistant, entry: ConfigEntry
-) -> None:
+async def async_options_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Handle options update.
 
     Args:
@@ -138,4 +135,3 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
         entry: Config entry being removed
     """
     # Clean up any resources if needed
-    pass
