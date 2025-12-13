@@ -84,6 +84,7 @@ class GeekMagicCoordinator(DataUpdateCoordinator):
         hass: HomeAssistant,
         device: GeekMagicDevice,
         options: dict[str, Any],
+        config_entry: Any = None,
     ) -> None:
         """Initialize the coordinator.
 
@@ -91,6 +92,7 @@ class GeekMagicCoordinator(DataUpdateCoordinator):
             hass: Home Assistant instance
             device: GeekMagic device client
             options: Integration options
+            config_entry: Config entry reference for entity registration
         """
         self.device = device
         self.options = self._migrate_options(options)
@@ -99,6 +101,9 @@ class GeekMagicCoordinator(DataUpdateCoordinator):
         self._current_screen: int = 0
         self._last_screen_change: float = time.time()
         self._last_image: bytes | None = None  # PNG bytes for camera preview
+        self._last_update_success: bool = False
+        self._last_update_time: float | None = None
+        self.config_entry = config_entry
 
         # Get refresh interval from options
         interval = self.options.get(CONF_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL)
@@ -436,6 +441,10 @@ class GeekMagicCoordinator(DataUpdateCoordinator):
 
             await self.device.upload_and_display(jpeg_data, "dashboard.jpg")
 
+            # Track success status
+            self._last_update_success = True
+            self._last_update_time = time.time()
+
             _LOGGER.debug(
                 "Display update completed: screen=%s, size=%.1fKB",
                 self.current_screen_name,
@@ -450,6 +459,7 @@ class GeekMagicCoordinator(DataUpdateCoordinator):
             }
 
         except Exception as err:
+            self._last_update_success = False
             _LOGGER.exception("Error updating GeekMagic display")
             raise UpdateFailed(f"Error updating display: {err}") from err
 
@@ -457,6 +467,39 @@ class GeekMagicCoordinator(DataUpdateCoordinator):
     def last_image(self) -> bytes | None:
         """Get the last rendered image as PNG bytes."""
         return self._last_image
+
+    @property
+    def device_name(self) -> str:
+        """Get device display name."""
+        if self.config_entry and self.config_entry.title:
+            return self.config_entry.title
+        return f"GeekMagic {self.device.host}"
+
+    @property
+    def device_version(self) -> str | None:
+        """Get device firmware version."""
+        # Could be fetched from device if supported
+        return None
+
+    @property
+    def last_update_success(self) -> bool:
+        """Check if last update was successful."""
+        return self._last_update_success
+
+    @last_update_success.setter
+    def last_update_success(self, value: bool) -> None:
+        """Set last update success status."""
+        self._last_update_success = value
+
+    @property
+    def last_update_time(self) -> float | None:
+        """Get timestamp of last successful update."""
+        return self._last_update_time
+
+    @property
+    def brightness(self) -> int:
+        """Get current brightness setting."""
+        return self.options.get("brightness", 50)
 
     async def async_set_brightness(self, brightness: int) -> None:
         """Set display brightness.
