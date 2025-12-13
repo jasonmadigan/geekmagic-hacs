@@ -96,21 +96,6 @@ configure_screen:
           max: 10
           step: 1
           mode: box
-    template:
-      name: Template
-      description: Apply a preset template (overrides layout/widgets)
-      required: false
-      selector:
-        select:
-          options:
-            - system_monitor
-            - smart_home
-            - weather
-            - media_player
-            - clock
-            - energy
-            - security
-            - thermostat
     layout:
       name: Layout
       description: Screen layout type

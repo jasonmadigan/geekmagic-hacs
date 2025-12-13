@@ -58,7 +58,6 @@ custom_components/geekmagic/
 ├── device.py         # HTTP API client for GeekMagic
 ├── renderer.py       # Pillow image generation
 ├── const.py          # Constants and config keys
-├── templates.py      # Screen template definitions
 ├── widgets/          # Widget components
 │   ├── base.py       # Widget base class
 │   ├── clock.py      # Clock widget

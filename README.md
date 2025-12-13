@@ -30,10 +30,11 @@ A Home Assistant custom integration for GeekMagic displays (SmallTV Pro and simi
 ## Features
 
 - **12 widget types**: Clock, entity, media, chart, text, gauge, progress, weather, status, camera, and more
-- **7 layout options**: Grid (2x2, 2x3, 3x3), hero, split (vertical/horizontal), three-column
+- **5 layout options**: Grid (2x2, 2x3), hero, split, three-column
+- **Entity-based configuration**: Configure via Home Assistant entities (WLED-style)
+- **Multi-screen support**: Up to 10 screens with auto-cycling
 - **Pure Python rendering**: Uses Pillow for image generation (no browser required)
 - **Configurable refresh**: Updates every 5-300 seconds
-- **Easy setup**: Add device by IP address through the UI
 
 ## Installation
 
@@ -111,7 +112,6 @@ Each screen has its own configuration entities:
 | Entity | Type | Description |
 |--------|------|-------------|
 | `text.xxx_screen_N_name` | Text | Screen name |
-| `select.xxx_screen_N_template` | Select | Apply a preset template |
 | `select.xxx_screen_N_layout` | Select | Layout type (grid, hero, split, etc.) |
 
 ### Per-Slot Entities
@@ -140,51 +140,105 @@ Boolean options for each widget type appear as switches:
 
 ---
 
-## Screen Templates
+## Configuration Examples
 
-Templates provide one-click screen setup. Select a template and it automatically configures the layout and widget types:
+### Weather Dashboard (Hero Layout)
 
-| Template | Layout | Description |
-|----------|--------|-------------|
-| **System Monitor** | Grid 2x2 | CPU, Memory, Disk, Network gauges |
-| **Smart Home** | Grid 2x3 | Temperature, humidity, lights, motion, door, presence |
-| **Weather** | Hero | Weather hero + temperature, humidity, wind |
-| **Media Player** | Hero | Now playing with album art |
-| **Clock** | Hero | Large clock with date and info |
-| **Energy** | Grid 2x2 | Power, daily usage, cost, grid status |
-| **Security** | Grid 2x3 | Camera, door, window, motion, alarm, lock |
-| **Thermostat** | Hero | HVAC control with temperature |
-
-### Quick Setup with Templates
-
-1. Go to your device page in Home Assistant
-2. Find `Screen 1 Template` select entity
-3. Choose a template (e.g., "Weather Dashboard")
-4. The layout and widgets are auto-configured
-5. Set the entity IDs for each slot (e.g., `weather.home`)
-6. Done! Display updates immediately
-
-### Example Automation
+A weather-focused display with forecast and indoor conditions.
 
 ```yaml
-# Automatically configure display on startup
-automation:
-  - alias: "Configure GeekMagic on startup"
-    trigger:
-      - platform: homeassistant
-        event: start
-    action:
-      - service: select.select_option
-        target:
-          entity_id: select.geekmagic_display_screen_1_template
-        data:
-          option: "Weather Dashboard"
-      - service: text.set_value
-        target:
-          entity_id: text.geekmagic_display_screen_1_slot_1_entity
-        data:
-          value: "weather.home"
+# Screen: Hero layout (4 slots)
+# Slot 0 (hero): Weather widget with forecast
+# Slot 1-3 (footer): Indoor temp, humidity, outdoor temp
+
+# Configure via entities:
+select.geekmagic_display_screen_1_layout: "Hero (4 slots)"
+select.geekmagic_display_screen_1_slot_1_widget: "Weather"
+text.geekmagic_display_screen_1_slot_1_entity: "weather.home"
+select.geekmagic_display_screen_1_slot_2_widget: "Entity"
+text.geekmagic_display_screen_1_slot_2_entity: "sensor.living_room_temperature"
+select.geekmagic_display_screen_1_slot_3_widget: "Entity"
+text.geekmagic_display_screen_1_slot_3_entity: "sensor.living_room_humidity"
+select.geekmagic_display_screen_1_slot_4_widget: "Entity"
+text.geekmagic_display_screen_1_slot_4_entity: "sensor.outdoor_temperature"
 ```
+
+### System Monitor (Grid 2x2)
+
+Monitor your server or Home Assistant host.
+
+```yaml
+# Screen: Grid 2x2 layout (4 slots)
+# 4 gauge widgets showing CPU, Memory, Disk, Network
+
+select.geekmagic_display_screen_1_layout: "Grid 2x2 (4 slots)"
+select.geekmagic_display_screen_1_slot_1_widget: "Gauge"
+text.geekmagic_display_screen_1_slot_1_entity: "sensor.processor_use"
+select.geekmagic_display_screen_1_slot_2_widget: "Gauge"
+text.geekmagic_display_screen_1_slot_2_entity: "sensor.memory_use_percent"
+select.geekmagic_display_screen_1_slot_3_widget: "Gauge"
+text.geekmagic_display_screen_1_slot_3_entity: "sensor.disk_use_percent"
+select.geekmagic_display_screen_1_slot_4_widget: "Chart"
+text.geekmagic_display_screen_1_slot_4_entity: "sensor.network_throughput_in"
+```
+
+### Media Player (Hero Layout)
+
+Display now playing with album art.
+
+```yaml
+# Screen: Hero layout
+# Slot 0 (hero): Media player with album art
+# Slot 1-3: Additional info
+
+select.geekmagic_display_screen_1_layout: "Hero (4 slots)"
+select.geekmagic_display_screen_1_slot_1_widget: "Media Player"
+text.geekmagic_display_screen_1_slot_1_entity: "media_player.spotify"
+select.geekmagic_display_screen_1_slot_2_widget: "Text"
+select.geekmagic_display_screen_1_slot_3_widget: "Entity"
+text.geekmagic_display_screen_1_slot_3_entity: "sensor.living_room_temperature"
+select.geekmagic_display_screen_1_slot_4_widget: "Clock"
+```
+
+### Smart Home Overview (Grid 2x3)
+
+6 entity slots for a compact home status view.
+
+```yaml
+# Screen: Grid 2x3 layout (6 slots)
+# Mix of temperature, humidity, and status widgets
+
+select.geekmagic_display_screen_1_layout: "Grid 2x3 (6 slots)"
+select.geekmagic_display_screen_1_slot_1_widget: "Entity"
+text.geekmagic_display_screen_1_slot_1_entity: "sensor.living_room_temperature"
+select.geekmagic_display_screen_1_slot_2_widget: "Entity"
+text.geekmagic_display_screen_1_slot_2_entity: "sensor.living_room_humidity"
+select.geekmagic_display_screen_1_slot_3_widget: "Status"
+text.geekmagic_display_screen_1_slot_3_entity: "binary_sensor.front_door"
+select.geekmagic_display_screen_1_slot_4_widget: "Status"
+text.geekmagic_display_screen_1_slot_4_entity: "binary_sensor.motion_sensor"
+select.geekmagic_display_screen_1_slot_5_widget: "Entity"
+text.geekmagic_display_screen_1_slot_5_entity: "light.living_room"
+select.geekmagic_display_screen_1_slot_6_widget: "Status"
+text.geekmagic_display_screen_1_slot_6_entity: "person.john"
+```
+
+### Clock & Temperature (Split Layout)
+
+Large clock with chart on the side.
+
+```yaml
+# Screen: Split layout (2 slots)
+# Slot 0: Large clock
+# Slot 1: Temperature chart
+
+select.geekmagic_display_screen_1_layout: "Split (2 slots)"
+select.geekmagic_display_screen_1_slot_1_widget: "Clock"
+select.geekmagic_display_screen_1_slot_2_widget: "Chart"
+text.geekmagic_display_screen_1_slot_2_entity: "sensor.outdoor_temperature"
+```
+
+### Example Automations
 
 ```yaml
 # Cycle screens based on time of day
@@ -210,6 +264,27 @@ automation:
           entity_id: select.geekmagic_display_current_screen
         data:
           option: "Media"
+```
+
+```yaml
+# Show security camera when motion detected
+automation:
+  - alias: "Show camera on motion"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.front_door_motion
+        to: "on"
+    action:
+      - service: select.select_option
+        target:
+          entity_id: select.geekmagic_display_screen_1_slot_1_widget
+        data:
+          option: "Camera"
+      - service: text.set_value
+        target:
+          entity_id: text.geekmagic_display_screen_1_slot_1_entity
+        data:
+          value: "camera.front_door"
 ```
 
 ---
@@ -396,10 +471,8 @@ Displays list of binary sensors.
 |--------|------|-------|-------------|
 | Grid 2x2 | `grid_2x2` | 4 | 2x2 grid of equal widgets |
 | Grid 2x3 | `grid_2x3` | 6 | 2 rows, 3 columns |
-| Grid 3x3 | `grid_3x3` | 9 | 3x3 grid (compact) |
 | Hero | `hero` | 4 | Large hero + 3 footer widgets |
-| Split Vertical | `split` | 2 | Left/right panels |
-| Split Horizontal | `split` | 2 | Top/bottom panels |
+| Split | `split` | 2 | Left/right or top/bottom panels |
 | Three Column | `three_column` | 3 | 3 vertical columns |
 
 ### Layout Examples
@@ -434,23 +507,6 @@ Displays list of binary sensors.
 
 **Best for**: 6 entity values, compact dashboard
 
-#### Grid 3x3
-<img src="samples/layouts/layout_grid_3x3.png" alt="Grid 3x3" width="180">
-
-9 slots in 3x3 arrangement. Each slot is ~74x74px.
-
-```
-+----+----+----+
-| 0  | 1  | 2  |
-+----+----+----+
-| 3  | 4  | 5  |
-+----+----+----+
-| 6  | 7  | 8  |
-+----+----+----+
-```
-
-**Best for**: Many small indicators, temperature overview
-
 #### Hero Layout
 <img src="samples/layouts/layout_hero.png" alt="Hero Layout" width="180">
 
@@ -473,45 +529,21 @@ Large hero slot (70% height) + 3 footer widgets.
 
 **Best for**: Weather + stats, clock + info, media player
 
-#### Split Vertical
-<img src="samples/layouts/layout_split_vertical.png" alt="Split Vertical" width="180">
+#### Split
+<img src="samples/layouts/layout_split_vertical.png" alt="Split Layout" width="180">
 
-Two side-by-side panels (left/right).
-
-```
-+----------+----------+
-|          |          |
-|    0     |    1     |
-|          |          |
-+----------+----------+
-```
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `horizontal` | bool | `false` | Set to `false` for vertical split |
-| `ratio` | float | `0.5` | Left panel ratio (0.2-0.8) |
-
-**Best for**: Clock + chart, media + status
-
-#### Split Horizontal
-<img src="samples/layouts/layout_split_horizontal.png" alt="Split Horizontal" width="180">
-
-Two stacked panels (top/bottom).
+Two panels (left/right or top/bottom).
 
 ```
-+---------------------+
-|         0           |
-+---------------------+
-|         1           |
-+---------------------+
+Vertical (default):     Horizontal:
++----------+----------+ +---------------------+
+|          |          | |         0           |
+|    0     |    1     | +---------------------+
+|          |          | |         1           |
++----------+----------+ +---------------------+
 ```
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `horizontal` | bool | `true` | Set to `true` for horizontal split |
-| `ratio` | float | `0.5` | Top panel ratio (0.2-0.8) |
-
-**Best for**: Clock + status list, weather + entities
+**Best for**: Clock + chart, media + status, large widget pairs
 
 #### Three Column
 <img src="samples/layouts/layout_three_column.png" alt="Three Column" width="180">

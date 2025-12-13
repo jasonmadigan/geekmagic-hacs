@@ -43,17 +43,6 @@ WIDGET_OPTIONS = {
     **WIDGET_TYPE_NAMES,
 }
 
-TEMPLATE_OPTIONS = {
-    "custom": "Custom",
-    "system_monitor": "System Monitor",
-    "smart_home": "Smart Home",
-    "weather": "Weather Dashboard",
-    "media_player": "Media Player",
-    "clock": "Clock Dashboard",
-    "energy": "Energy Monitor",
-    "security": "Security",
-}
-
 
 @dataclass(frozen=True, kw_only=True)
 class GeekMagicSelectEntityDescription(SelectEntityDescription):
@@ -61,7 +50,7 @@ class GeekMagicSelectEntityDescription(SelectEntityDescription):
 
     screen_index: int | None = None
     slot_index: int | None = None
-    select_type: str = ""  # "current_screen", "layout", "template", "widget_type"
+    select_type: str = ""  # "current_screen", "layout", "widget_type"
 
 
 async def async_setup_entry(
@@ -100,24 +89,6 @@ async def async_setup_entry(
         # Per-screen entities
         screens = coordinator.options.get(CONF_SCREENS, [])
         for screen_idx, screen_config in enumerate(screens):
-            # Screen template selector
-            template_key = f"screen_{screen_idx + 1}_template"
-            if template_key not in current_entity_ids:
-                current_entity_ids.add(template_key)
-                entities_to_add.append(
-                    GeekMagicScreenTemplateSelect(
-                        coordinator,
-                        GeekMagicSelectEntityDescription(
-                            key=template_key,
-                            translation_key="screen_template",
-                            icon="mdi:view-dashboard",
-                            entity_category=EntityCategory.CONFIG,
-                            select_type="template",
-                            screen_index=screen_idx,
-                        ),
-                    )
-                )
-
             # Screen layout selector
             layout_key = f"screen_{screen_idx + 1}_layout"
             if layout_key not in current_entity_ids:
@@ -227,53 +198,6 @@ class GeekMagicCurrentScreenSelect(GeekMagicSelectEntity):
             if screen.get("name", f"Screen {i + 1}") == option:
                 await self.coordinator.async_set_screen(i)
                 break
-
-
-class GeekMagicScreenTemplateSelect(GeekMagicSelectEntity):
-    """Select entity for screen template."""
-
-    @property
-    def options(self) -> list[str]:
-        """Return available template options."""
-        return list(TEMPLATE_OPTIONS.values())
-
-    @property
-    def current_option(self) -> str | None:
-        """Return the current template (always 'Custom' since we don't track this)."""
-        return "Custom"
-
-    async def async_select_option(self, option: str) -> None:
-        """Apply a template to the screen."""
-        from ..templates import apply_template
-
-        screen_idx = self.entity_description.screen_index
-        if screen_idx is None:
-            return
-
-        # Find template key from display name
-        template_key = None
-        for key, name in TEMPLATE_OPTIONS.items():
-            if name == option:
-                template_key = key
-                break
-
-        if template_key and template_key != "custom":
-            entry = self._get_config_entry()
-            await apply_template(
-                self.hass,
-                entry,
-                screen_idx,
-                template_key,
-            )
-
-    @property
-    def name(self) -> str:
-        """Return entity name with screen context."""
-        screen_idx = self.entity_description.screen_index
-        if screen_idx is not None:
-            # "Apply" sorts before "Layout" and "Name"
-            return f"Screen {screen_idx + 1} Apply Template"
-        return "Apply Template"
 
 
 class GeekMagicScreenLayoutSelect(GeekMagicSelectEntity):

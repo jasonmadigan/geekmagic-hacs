@@ -207,7 +207,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         """
         entry_id = call.data.get("entry_id")
         screen_index = call.data.get("screen", 1) - 1  # Convert to 0-based
-        template = call.data.get("template")
         layout = call.data.get("layout")
         name = call.data.get("name")
 
@@ -231,13 +230,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             )
 
         screens[screen_index] = dict(screens[screen_index])
-
-        # Apply template if specified
-        if template:
-            from .templates import apply_template
-
-            await apply_template(hass, entry, screen_index, template)
-            return  # Template applies everything
 
         # Apply individual settings
         if name:

@@ -4,7 +4,7 @@ This module contains all Home Assistant entity platforms for device configuratio
 - button: Action buttons (refresh, next/prev screen)
 - entity: Base entity class
 - number: Numeric settings (brightness, intervals, screen count)
-- select: Dropdown selectors (screens, layouts, widgets, templates)
+- select: Dropdown selectors (screens, layouts, widgets)
 - sensor: Diagnostic sensors (status, last update)
 - switch: Boolean widget options
 - text: Text inputs (screen names, labels)

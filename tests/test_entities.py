@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -283,14 +283,6 @@ class TestSelectEntities:
         assert "clock" in WIDGET_OPTIONS
         assert "entity" in WIDGET_OPTIONS
 
-    def test_template_options_defined(self):
-        """Test template options are defined."""
-        from custom_components.geekmagic.entities.select import TEMPLATE_OPTIONS
-
-        assert "custom" in TEMPLATE_OPTIONS
-        assert "weather" in TEMPLATE_OPTIONS
-        assert "system_monitor" in TEMPLATE_OPTIONS
-
 
 class TestSwitchEntities:
     """Test switch entity platform."""
@@ -358,83 +350,6 @@ class TestTextEntities:
 
         entity = GeekMagicSlotLabelText(mock_coordinator, description)
         assert entity.native_value == "Test Label"
-
-
-class TestTemplates:
-    """Test screen templates."""
-
-    def test_templates_defined(self):
-        """Test screen templates are defined."""
-        from custom_components.geekmagic.templates import SCREEN_TEMPLATES
-
-        assert "system_monitor" in SCREEN_TEMPLATES
-        assert "weather" in SCREEN_TEMPLATES
-        assert "media_player" in SCREEN_TEMPLATES
-        assert "clock" in SCREEN_TEMPLATES
-        assert "energy" in SCREEN_TEMPLATES
-        assert "security" in SCREEN_TEMPLATES
-        assert "thermostat" in SCREEN_TEMPLATES
-
-    def test_template_structure(self):
-        """Test template has required fields."""
-        from custom_components.geekmagic.templates import SCREEN_TEMPLATES
-
-        for name, template in SCREEN_TEMPLATES.items():
-            assert "name" in template, f"Template {name} missing 'name'"
-            assert "layout" in template, f"Template {name} missing 'layout'"
-            assert "widgets" in template, f"Template {name} missing 'widgets'"
-            assert isinstance(template["widgets"], list)
-
-    def test_system_monitor_template(self):
-        """Test system monitor template configuration."""
-        from custom_components.geekmagic.templates import SCREEN_TEMPLATES
-
-        template = SCREEN_TEMPLATES["system_monitor"]
-        assert template["layout"] == "grid_2x2"
-        assert len(template["widgets"]) == 4
-
-        # First 3 widgets should be gauges
-        for widget in template["widgets"][:3]:
-            assert widget["type"] == "gauge"
-            assert "options" in widget
-            assert widget["options"]["style"] == "ring"
-
-        # Last widget is a chart
-        assert template["widgets"][3]["type"] == "chart"
-
-    def test_weather_template(self):
-        """Test weather template configuration."""
-        from custom_components.geekmagic.templates import SCREEN_TEMPLATES
-
-        template = SCREEN_TEMPLATES["weather"]
-        assert template["layout"] == "hero"
-        assert len(template["widgets"]) == 4
-
-        # First widget should be weather hero
-        assert template["widgets"][0]["type"] == "weather"
-        assert template["widgets"][0]["slot"] == 0
-
-    @pytest.mark.asyncio
-    async def test_apply_template(self, hass, entity_entry):
-        """Test applying a template to a screen."""
-        from custom_components.geekmagic.templates import apply_template
-
-        entity_entry.add_to_hass(hass)
-
-        # Apply the weather template
-        with patch.object(hass.config_entries, "async_update_entry") as mock_update:
-            await apply_template(hass, entity_entry, 0, "weather")
-
-            # Verify config entry was updated
-            mock_update.assert_called_once()
-            call_kwargs = mock_update.call_args[1]
-            new_options = call_kwargs["options"]
-
-            # Check that screen was configured with template
-            assert CONF_SCREENS in new_options
-            screen = new_options[CONF_SCREENS][0]
-            assert screen["layout"] == "hero"
-            assert len(screen["widgets"]) == 4
 
 
 class TestEntityDynamicCreation:
