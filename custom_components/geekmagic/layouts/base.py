@@ -6,7 +6,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from ..const import DISPLAY_HEIGHT, DISPLAY_WIDTH
+from PIL import Image
+from PIL import ImageDraw as PILImageDraw
+
+from ..const import COLOR_BLACK, DISPLAY_HEIGHT, DISPLAY_WIDTH
 from ..render_context import RenderContext
 
 if TYPE_CHECKING:
@@ -115,19 +118,45 @@ class Layout(ABC):
         draw: ImageDraw.ImageDraw,
         hass: HomeAssistant | None = None,
     ) -> None:
-        """Render all widgets in the layout.
+        """Render all widgets in the layout with clipping.
+
+        Each widget is rendered to a temporary image first, then pasted
+        onto the main canvas. This ensures widgets cannot overflow their
+        slot boundaries.
 
         Args:
             renderer: Renderer instance
             draw: ImageDraw instance
             hass: Home Assistant instance
         """
+        # Get the main canvas from the draw object
+        canvas = draw._image  # noqa: SLF001
+        scale = renderer.scale
+
         for slot in self.slots:
             widget = slot.widget
             if widget is None:
                 continue
-            ctx = RenderContext(draw, slot.rect, renderer)
+
+            # Calculate slot dimensions in scaled coordinates
+            x1, y1, x2, y2 = slot.rect
+            slot_width = (x2 - x1) * scale
+            slot_height = (y2 - y1) * scale
+
+            # Create temporary image for this widget
+            temp_img = Image.new("RGB", (slot_width, slot_height), COLOR_BLACK)
+            temp_draw = PILImageDraw.Draw(temp_img)
+
+            # Create render context with local coordinates (0, 0 to width, height)
+            # The rect is relative to the temp image, not the main canvas
+            local_rect = (0, 0, x2 - x1, y2 - y1)
+            ctx = RenderContext(temp_draw, local_rect, renderer)
             widget.render(ctx, hass)
+
+            # Paste the widget image onto the main canvas at the slot position
+            paste_x = x1 * scale
+            paste_y = y1 * scale
+            canvas.paste(temp_img, (paste_x, paste_y))
 
     def get_all_entities(self) -> list[str]:
         """Get all entity IDs from all widgets."""
