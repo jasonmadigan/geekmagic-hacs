@@ -91,7 +91,7 @@ async def async_setup_entry(
 
         screens = coordinator.options.get(CONF_SCREENS, [])
         for screen_idx, screen_config in enumerate(screens):
-            # Screen header divider
+            # Screen header divider - "!" sorts before letters (ASCII 33 < 65)
             screen_divider_key = f"screen_{screen_idx + 1}_divider"
             if screen_divider_key not in current_divider_ids:
                 current_divider_ids.add(screen_divider_key)
@@ -105,7 +105,8 @@ async def async_setup_entry(
                             screen_index=screen_idx,
                             is_divider=True,
                         ),
-                        name=f"─── Screen {screen_idx + 1} ───",
+                        # "Screen 1 !" sorts before "Screen 1 Apply..."
+                        name=f"Screen {screen_idx + 1} !━━━━━━━━━━━",
                     )
                 )
 
@@ -114,7 +115,7 @@ async def async_setup_entry(
             slot_count = LAYOUT_SLOT_COUNTS.get(layout_type, 4)
 
             for slot_idx in range(slot_count):
-                # Slot header divider
+                # Slot header divider - "!" sorts before "D" in "Display"
                 slot_divider_key = f"screen_{screen_idx + 1}_slot_{slot_idx + 1}_divider"
                 if slot_divider_key not in current_divider_ids:
                     current_divider_ids.add(slot_divider_key)
@@ -129,7 +130,8 @@ async def async_setup_entry(
                                 slot_index=slot_idx,
                                 is_divider=True,
                             ),
-                            name=f"── Slot {slot_idx + 1} ──",
+                            # "Screen 1 Slot 1 !" sorts before "Screen 1 Slot 1 Display"
+                            name=f"Screen {screen_idx + 1} Slot {slot_idx + 1} !━━━━━━",
                         )
                     )
 
@@ -198,7 +200,6 @@ class GeekMagicDividerEntity(GeekMagicEntity, SensorEntity):
     """A visual divider entity for organizing config sections."""
 
     entity_description: GeekMagicSensorEntityDescription
-    _attr_entity_registry_enabled_default = False  # Disabled by default
 
     def __init__(
         self,
