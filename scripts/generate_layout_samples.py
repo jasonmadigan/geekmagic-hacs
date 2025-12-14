@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import random
 import sys
 from pathlib import Path
 
@@ -26,10 +27,13 @@ from custom_components.geekmagic.layouts.hero import HeroLayout
 from custom_components.geekmagic.layouts.split import SplitLayout, ThreeColumnLayout
 from custom_components.geekmagic.renderer import Renderer
 from custom_components.geekmagic.widgets import (
+    ChartWidget,
     ClockWidget,
     EntityWidget,
     GaugeWidget,
+    ProgressWidget,
     StatusListWidget,
+    StatusWidget,
     WeatherWidget,
     WidgetConfig,
 )
@@ -386,60 +390,165 @@ def generate_three_column(renderer: Renderer, output_dir: Path) -> None:
 
 
 def generate_theme_samples(renderer: Renderer, output_dir: Path) -> None:
-    """Generate sample images for each theme using Grid 2x2 layout."""
+    """Generate sample images for each theme with varied widgets."""
     hass = create_mock_hass()
+
+    # Add chart data for chart widgets
+    hass.states.set(
+        "sensor.temperature",
+        "23",
+        {"unit_of_measurement": "°C", "friendly_name": "Temperature"},
+    )
+
+    # Define unique widget configurations for each theme
+    theme_configs: dict[str, list] = {
+        # Classic: Gauge rings + chart (system monitoring feel)
+        "classic": [
+            ("gauge", "sensor.cpu", "CPU", {"style": "ring"}),
+            ("gauge", "sensor.memory", "Memory", {"style": "ring"}),
+            ("chart", "sensor.temperature", "Temp", {"hours": 24}),
+            ("gauge", "sensor.disk", "Disk", {"style": "bar"}),
+        ],
+        # Minimal: Clean entities + status
+        "minimal": [
+            ("entity", "sensor.temp", "Temp", {}),
+            ("entity", "sensor.humidity", "Humidity", {}),
+            ("status", "device_tracker.phone", "Phone", {}),
+            ("entity", "sensor.power", "Power", {}),
+        ],
+        # Neon: Gauges with glow effect
+        "neon": [
+            ("gauge", "sensor.cpu", "CPU", {"style": "arc"}),
+            ("gauge", "sensor.memory", "MEM", {"style": "arc"}),
+            ("chart", "sensor.temperature", "Temp", {"hours": 12}),
+            ("gauge", "sensor.battery", "BAT", {"style": "ring"}),
+        ],
+        # Retro: Terminal-style with bars
+        "retro": [
+            ("gauge", "sensor.cpu", "CPU", {"style": "bar"}),
+            ("gauge", "sensor.memory", "MEM", {"style": "bar"}),
+            ("gauge", "sensor.disk", "DSK", {"style": "bar"}),
+            ("gauge", "sensor.network", "NET", {"style": "bar"}),
+        ],
+        # Soft: Gentle progress + entities
+        "soft": [
+            ("entity", "sensor.temp", "Inside", {}),
+            ("progress", "sensor.battery", "Battery", {"goal": 100}),
+            ("chart", "sensor.temperature", "Trend", {"hours": 24}),
+            ("entity", "sensor.humidity", "Humidity", {}),
+        ],
+        # Light: Clean gauges for daytime use
+        "light": [
+            ("gauge", "sensor.cpu", "CPU", {"style": "ring"}),
+            ("gauge", "sensor.memory", "Memory", {"style": "ring"}),
+            ("entity", "sensor.temp", "Temp", {}),
+            ("progress", "sensor.disk", "Disk", {"goal": 100}),
+        ],
+        # Ocean: Water/nautical themed
+        "ocean": [
+            ("gauge", "sensor.humidity", "Humidity", {"style": "arc"}),
+            ("chart", "sensor.temperature", "Temp", {"hours": 24}),
+            ("entity", "sensor.temp", "Inside", {}),
+            ("gauge", "sensor.battery", "Battery", {"style": "ring"}),
+        ],
+        # Sunset: Warm energy monitoring
+        "sunset": [
+            ("gauge", "sensor.power", "Power", {"style": "arc"}),
+            ("gauge", "sensor.solar", "Solar", {"style": "arc"}),
+            ("chart", "sensor.temperature", "Temp", {"hours": 12}),
+            ("entity", "sensor.battery", "Battery", {}),
+        ],
+        # Forest: Nature/eco themed
+        "forest": [
+            ("entity", "sensor.temp", "Outdoor", {}),
+            ("gauge", "sensor.humidity", "Humidity", {"style": "bar"}),
+            ("chart", "sensor.temperature", "Climate", {"hours": 24}),
+            ("progress", "sensor.solar", "Solar", {"goal": 5}),
+        ],
+        # Candy: Playful and fun
+        "candy": [
+            ("gauge", "sensor.battery", "Battery", {"style": "ring"}),
+            ("entity", "sensor.temp", "Temp", {}),
+            ("progress", "sensor.cpu", "CPU", {"goal": 100}),
+            ("chart", "sensor.temperature", "Trend", {"hours": 12}),
+        ],
+    }
 
     for theme_name, theme in THEMES.items():
         layout = Grid2x2(padding=8, gap=8)
-        layout.theme = theme  # Apply theme to layout
+        layout.theme = theme
 
-        # Use theme accent colors for widgets
         accent_colors = theme.accent_colors
+        configs = theme_configs.get(theme_name, theme_configs["classic"])
 
-        widgets = [
-            GaugeWidget(
-                WidgetConfig(
-                    widget_type="gauge",
-                    slot=0,
-                    entity_id="sensor.cpu",
-                    label="CPU",
-                    color=accent_colors[0 % len(accent_colors)],
-                    options={"style": "ring"},
+        for i, (widget_type, entity_id, label, options) in enumerate(configs):
+            color = accent_colors[i % len(accent_colors)]
+
+            if widget_type == "gauge":
+                widget = GaugeWidget(
+                    WidgetConfig(
+                        widget_type="gauge",
+                        slot=i,
+                        entity_id=entity_id,
+                        label=label,
+                        color=color,
+                        options=options,
+                    )
                 )
-            ),
-            GaugeWidget(
-                WidgetConfig(
-                    widget_type="gauge",
-                    slot=1,
-                    entity_id="sensor.memory",
-                    label="Memory",
-                    color=accent_colors[1 % len(accent_colors)],
-                    options={"style": "ring"},
+            elif widget_type == "entity":
+                widget = EntityWidget(
+                    WidgetConfig(
+                        widget_type="entity",
+                        slot=i,
+                        entity_id=entity_id,
+                        label=label,
+                        color=color,
+                        options={"show_panel": True, **options},
+                    )
                 )
-            ),
-            GaugeWidget(
-                WidgetConfig(
-                    widget_type="gauge",
-                    slot=2,
-                    entity_id="sensor.disk",
-                    label="Disk",
-                    color=accent_colors[2 % len(accent_colors)],
-                    options={"style": "bar"},
+            elif widget_type == "chart":
+                chart = ChartWidget(
+                    WidgetConfig(
+                        widget_type="chart",
+                        slot=i,
+                        entity_id=entity_id,
+                        label=label,
+                        color=color,
+                        options=options,
+                    )
                 )
-            ),
-            GaugeWidget(
-                WidgetConfig(
-                    widget_type="gauge",
-                    slot=3,
-                    entity_id="sensor.battery",
-                    label="Battery",
-                    color=accent_colors[3 % len(accent_colors)],
-                    options={"style": "bar"},
+                # Set sample history data for chart (deterministic for reproducible samples)
+                rng = random.Random(42 + i)  # noqa: S311
+                base_temp = 20
+                history = [base_temp + rng.uniform(-3, 5) for _ in range(48)]
+                chart.set_history(history)
+                widget = chart
+            elif widget_type == "progress":
+                widget = ProgressWidget(
+                    WidgetConfig(
+                        widget_type="progress",
+                        slot=i,
+                        entity_id=entity_id,
+                        label=label,
+                        color=color,
+                        options=options,
+                    )
                 )
-            ),
-        ]
-        for i, w in enumerate(widgets):
-            layout.set_widget(i, w)
+            elif widget_type == "status":
+                widget = StatusWidget(
+                    WidgetConfig(
+                        widget_type="status",
+                        slot=i,
+                        entity_id=entity_id,
+                        label=label,
+                        color=color,
+                        options={"on_color": theme.success, "off_color": theme.error},
+                    )
+                )
+            else:
+                continue
+
+            layout.set_widget(i, widget)
 
         img, draw = renderer.create_canvas(background=theme.background)
         layout.render(renderer, draw, hass)  # type: ignore[arg-type]
