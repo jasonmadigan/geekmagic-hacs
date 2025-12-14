@@ -70,10 +70,11 @@ class EntityWidget(Widget):
 
         # Truncate value and name - use generous estimates to avoid over-truncation
         # Values can be longer text (e.g., "Team Meeting"), labels use smaller font
+        # Use middle truncation for names to show start and end (e.g., "Living..Room")
         max_value_chars = estimate_max_chars(ctx.width, char_width=6, padding=6)
         max_name_chars = estimate_max_chars(ctx.width, char_width=5, padding=4)
-        value = truncate_text(value, max_value_chars)
-        name = truncate_text(name, max_name_chars)
+        value = truncate_text(value, max_value_chars, style="middle")
+        name = truncate_text(name, max_name_chars, style="middle")
 
         color = self.config.color or COLOR_CYAN
         value_text = format_value_with_unit(value, unit)

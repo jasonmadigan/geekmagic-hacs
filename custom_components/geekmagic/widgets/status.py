@@ -66,9 +66,9 @@ class StatusWidget(Widget):
             name = state.entity_id
         name = name or PLACEHOLDER_NAME
 
-        # Truncate name using consistent helper
+        # Truncate name using middle ellipsis to show start and end
         max_name_len = estimate_max_chars(ctx.width, char_width=7, padding=20)
-        name = truncate_text(name, max_name_len)
+        name = truncate_text(name, max_name_len, style="middle")
 
         # Draw status indicator (dot)
         dot_x = padding + dot_radius
@@ -188,8 +188,8 @@ class StatusListWidget(Widget):
             # Get color
             color = self.on_color if is_on else self.off_color
 
-            # Truncate label using helper
-            label = truncate_text(label, max_len)
+            # Truncate label using middle ellipsis
+            label = truncate_text(label, max_len, style="middle")
 
             # Draw dot
             dot_y = current_y + row_height // 2

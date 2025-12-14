@@ -14,20 +14,45 @@ if TYPE_CHECKING:
 ON_STATES = frozenset({"on", "true", "home", "locked", "1"})
 
 
-def truncate_text(text: str, max_chars: int, suffix: str = "..") -> str:
-    """Truncate text with ellipsis if it exceeds max_chars.
+def truncate_text(
+    text: str,
+    max_chars: int,
+    style: str = "end",
+    ellipsis: str = "..",
+) -> str:
+    """Truncate text if it exceeds max_chars.
 
     Args:
         text: Text to truncate
         max_chars: Maximum number of characters
-        suffix: String to append when truncating (default: "..")
+        style: Truncation style:
+            - "end": "very long text" -> "very lo.."
+            - "middle": "very long text" -> "very..ext"
+            - "start": "very long text" -> "..ng text"
+        ellipsis: String to use for truncation (default: "..")
 
     Returns:
-        Original text if short enough, otherwise truncated with suffix
+        Original text if short enough, otherwise truncated
     """
     if len(text) <= max_chars:
         return text
-    return text[: max_chars - len(suffix)] + suffix
+
+    available = max_chars - len(ellipsis)
+    if available <= 0:
+        return ellipsis[:max_chars]
+
+    if style == "middle":
+        # Show beginning and end: "very..ext"
+        start_len = (available + 1) // 2  # Slightly favor start
+        end_len = available - start_len
+        if end_len > 0:
+            return text[:start_len] + ellipsis + text[-end_len:]
+        return text[:start_len] + ellipsis
+    if style == "start":
+        # Show end: "..ng text"
+        return ellipsis + text[-available:]
+    # Default: show start: "very lo.."
+    return text[:available] + ellipsis
 
 
 def extract_numeric(
