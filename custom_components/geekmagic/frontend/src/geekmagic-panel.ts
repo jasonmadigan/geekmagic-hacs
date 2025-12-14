@@ -47,7 +47,6 @@ export class GeekMagicPanel extends LitElement {
   @state() private _previewLoading = false;
   @state() private _loading = true;
   @state() private _saving = false;
-  @state() private _draggingSlot: number | null = null;
 
   static styles = css`
     :host {
@@ -185,25 +184,21 @@ export class GeekMagicPanel extends LitElement {
       flex: 1;
     }
 
-    .editor-container {
-      display: flex;
-      gap: 24px;
-      height: calc(100% - 80px);
-    }
-
     .editor-form {
-      flex: 7;
-      overflow-y: auto;
+      max-width: 800px;
     }
 
-    .editor-preview {
-      flex: 3;
-      min-width: 280px;
+    /* Preview section - above widgets */
+    .preview-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 24px;
     }
 
     .preview-card {
-      position: sticky;
-      top: 0;
+      width: 100%;
+      max-width: 300px;
     }
 
     .preview-card .card-content {
@@ -214,16 +209,16 @@ export class GeekMagicPanel extends LitElement {
     }
 
     .preview-image {
-      width: 240px;
-      height: 240px;
+      width: 200px;
+      height: 200px;
       border-radius: 8px;
       background: #000;
       object-fit: contain;
     }
 
     .preview-placeholder {
-      width: 240px;
-      height: 240px;
+      width: 200px;
+      height: 200px;
       border-radius: 8px;
       background: var(--secondary-background-color);
       display: flex;
@@ -256,66 +251,15 @@ export class GeekMagicPanel extends LitElement {
       margin-top: 0;
     }
 
-    /* Slots Grid - matches actual layout */
+    /* Slots list - simple responsive grid */
     .slots-grid {
       display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 16px;
-      max-width: 900px;
-    }
-
-    /* Layout-specific grids */
-    .slots-grid.layout-grid_2x2 {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .slots-grid.layout-grid_2x3 {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .slots-grid.layout-grid_3x2 {
-      grid-template-columns: repeat(3, 1fr);
-    }
-
-    .slots-grid.layout-hero {
-      /* Hero: 1 large on top, 3 small on bottom */
-      grid-template-columns: repeat(3, 1fr);
-    }
-
-    .slots-grid.layout-hero .slot-card:first-child {
-      grid-column: 1 / -1;
-    }
-
-    .slots-grid.layout-split {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .slots-grid.layout-three_column {
-      grid-template-columns: repeat(3, 1fr);
-    }
-
-    /* Fallback for unknown layouts */
-    .slots-grid:not([class*="layout-"]) {
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     }
 
     .slot-card {
       --ha-card-border-radius: 8px;
-      cursor: grab;
-      transition: transform 0.2s, opacity 0.2s, box-shadow 0.2s;
-    }
-
-    .slot-card:active {
-      cursor: grabbing;
-    }
-
-    .slot-card.dragging {
-      opacity: 0.5;
-      transform: scale(0.95);
-    }
-
-    .slot-card.drag-over {
-      box-shadow: 0 0 0 2px var(--primary-color);
-      transform: scale(1.02);
     }
 
     .slot-card .card-content {
@@ -328,6 +272,48 @@ export class GeekMagicPanel extends LitElement {
       font-weight: 500;
       margin-bottom: 16px;
       color: var(--primary-text-color);
+    }
+
+    /* Tiny position grid */
+    .position-grid {
+      display: inline-grid;
+      gap: 2px;
+      margin-right: 12px;
+      padding: 4px;
+      background: var(--secondary-background-color);
+      border-radius: 4px;
+    }
+
+    .position-grid.cols-2 {
+      grid-template-columns: repeat(2, 16px);
+    }
+
+    .position-grid.cols-3 {
+      grid-template-columns: repeat(3, 16px);
+    }
+
+    .position-cell {
+      width: 16px;
+      height: 16px;
+      background: var(--divider-color);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .position-cell:hover {
+      background: var(--primary-color);
+      opacity: 0.7;
+    }
+
+    .position-cell.active {
+      background: var(--primary-color);
+    }
+
+    .position-cell.hero-main {
+      grid-column: 1 / -1;
+      width: auto;
+      height: 24px;
     }
 
     .slot-field {
@@ -578,64 +564,6 @@ export class GeekMagicPanel extends LitElement {
     }
   }
 
-  // Drag and drop handlers for reordering slots
-  private _onDragStart(e: DragEvent, slot: number): void {
-    this._draggingSlot = slot;
-    if (e.dataTransfer) {
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", slot.toString());
-    }
-  }
-
-  private _onDragEnd(): void {
-    this._draggingSlot = null;
-    // Remove drag-over class from all cards
-    this.shadowRoot?.querySelectorAll(".drag-over").forEach((el) => {
-      el.classList.remove("drag-over");
-    });
-  }
-
-  private _onDragOver(e: DragEvent, slot: number): void {
-    e.preventDefault();
-    if (this._draggingSlot === null || this._draggingSlot === slot) return;
-    if (e.dataTransfer) {
-      e.dataTransfer.dropEffect = "move";
-    }
-    (e.currentTarget as HTMLElement).classList.add("drag-over");
-  }
-
-  private _onDragLeave(e: DragEvent): void {
-    (e.currentTarget as HTMLElement).classList.remove("drag-over");
-  }
-
-  private _onDrop(e: DragEvent, targetSlot: number): void {
-    e.preventDefault();
-    (e.currentTarget as HTMLElement).classList.remove("drag-over");
-
-    if (this._draggingSlot === null || this._draggingSlot === targetSlot) return;
-    if (!this._editingView) return;
-
-    const sourceSlot = this._draggingSlot;
-
-    // Swap the widget configurations between slots
-    const widgets = [...this._editingView.widgets];
-    const sourceWidget = widgets.find((w) => w.slot === sourceSlot);
-    const targetWidget = widgets.find((w) => w.slot === targetSlot);
-
-    // Update slot assignments
-    if (sourceWidget) {
-      sourceWidget.slot = targetSlot;
-    }
-    if (targetWidget) {
-      targetWidget.slot = sourceSlot;
-    }
-
-    this._editingView = { ...this._editingView, widgets: [...widgets] };
-    this._draggingSlot = null;
-    this.requestUpdate();
-    this._refreshPreview();
-  }
-
   render() {
     if (this._loading) {
       return html`
@@ -791,65 +719,14 @@ export class GeekMagicPanel extends LitElement {
             })}
           placeholder="View name"
         ></ha-textfield>
-        <ha-button
-          raised
-          ?disabled=${this._saving}
-          @click=${this._saveView}
-        >
+        <ha-button raised ?disabled=${this._saving} @click=${this._saveView}>
           ${this._saving ? "Saving..." : "Save"}
         </ha-button>
       </div>
 
-      <div class="editor-container">
-        <div class="editor-form">
-          <div class="form-row">
-            <ha-select
-              label="Layout"
-              .value=${this._editingView.layout}
-              @selected=${(e: CustomEvent) => {
-                const index = e.detail.index as number;
-                const keys = Object.keys(this._config!.layout_types);
-                const value = keys[index];
-                if (value) this._updateEditingView({ layout: value });
-              }}
-              @closed=${(e: Event) => e.stopPropagation()}
-            >
-              ${Object.entries(this._config.layout_types).map(
-                ([key, info]) => html`
-                  <mwc-list-item value=${key}>
-                    ${info.name} (${info.slots} slots)
-                  </mwc-list-item>
-                `
-              )}
-            </ha-select>
-            <ha-select
-              label="Theme"
-              .value=${this._editingView.theme}
-              @selected=${(e: CustomEvent) => {
-                const index = e.detail.index as number;
-                const keys = Object.keys(this._config!.themes);
-                const value = keys[index];
-                if (value) this._updateEditingView({ theme: value });
-              }}
-              @closed=${(e: Event) => e.stopPropagation()}
-            >
-              ${Object.entries(this._config.themes).map(
-                ([key, name]) => html`
-                  <mwc-list-item value=${key}>${name}</mwc-list-item>
-                `
-              )}
-            </ha-select>
-          </div>
-
-          <div class="section-title">Widgets</div>
-          <div class="slots-grid layout-${this._editingView.layout}">
-            ${Array.from({ length: slotCount }, (_, i) =>
-              this._renderSlotEditor(i)
-            )}
-          </div>
-        </div>
-
-        <div class="editor-preview">
+      <div class="editor-form">
+        <!-- Preview at top -->
+        <div class="preview-section">
           <ha-card class="preview-card">
             <div class="card-header">
               <h3>Preview</h3>
@@ -873,31 +750,72 @@ export class GeekMagicPanel extends LitElement {
             </div>
           </ha-card>
         </div>
+
+        <!-- Layout and theme selectors -->
+        <div class="form-row">
+          <ha-select
+            label="Layout"
+            .value=${this._editingView.layout}
+            @selected=${(e: CustomEvent) => {
+              const index = e.detail.index as number;
+              const keys = Object.keys(this._config!.layout_types);
+              const value = keys[index];
+              if (value) this._updateEditingView({ layout: value });
+            }}
+            @closed=${(e: Event) => e.stopPropagation()}
+          >
+            ${Object.entries(this._config.layout_types).map(
+              ([key, info]) => html`
+                <mwc-list-item value=${key}>
+                  ${info.name} (${info.slots} slots)
+                </mwc-list-item>
+              `
+            )}
+          </ha-select>
+          <ha-select
+            label="Theme"
+            .value=${this._editingView.theme}
+            @selected=${(e: CustomEvent) => {
+              const index = e.detail.index as number;
+              const keys = Object.keys(this._config!.themes);
+              const value = keys[index];
+              if (value) this._updateEditingView({ theme: value });
+            }}
+            @closed=${(e: Event) => e.stopPropagation()}
+          >
+            ${Object.entries(this._config.themes).map(
+              ([key, name]) => html`
+                <mwc-list-item value=${key}>${name}</mwc-list-item>
+              `
+            )}
+          </ha-select>
+        </div>
+
+        <!-- Widget slots -->
+        <div class="section-title">Widgets</div>
+        <div class="slots-grid">
+          ${Array.from({ length: slotCount }, (_, i) =>
+            this._renderSlotEditor(i, slotCount)
+          )}
+        </div>
       </div>
     `;
   }
 
-  private _renderSlotEditor(slot: number) {
-    if (!this._config) return nothing;
+  private _renderSlotEditor(slot: number, slotCount: number) {
+    if (!this._config || !this._editingView) return nothing;
 
-    const widget = this._editingView?.widgets.find((w) => w.slot === slot);
+    const widget = this._editingView.widgets.find((w) => w.slot === slot);
     const widgetType = widget?.type || "";
     const schema = this._config.widget_types[widgetType];
+    const layout = this._editingView.layout;
 
     return html`
-      <ha-card
-        class="slot-card ${this._draggingSlot === slot ? "dragging" : ""}"
-        draggable="true"
-        @dragstart=${(e: DragEvent) => this._onDragStart(e, slot)}
-        @dragend=${() => this._onDragEnd()}
-        @dragover=${(e: DragEvent) => this._onDragOver(e, slot)}
-        @dragleave=${(e: DragEvent) => this._onDragLeave(e)}
-        @drop=${(e: DragEvent) => this._onDrop(e, slot)}
-      >
+      <ha-card class="slot-card">
         <div class="card-content">
           <div class="slot-header">
-            <ha-icon icon="mdi:drag" style="opacity: 0.5; margin-right: 8px;"></ha-icon>
-            Slot ${slot + 1}
+            ${this._renderPositionGrid(slot, slotCount, layout)}
+            <span style="flex: 1;">Slot ${slot + 1}</span>
           </div>
 
           <div class="slot-field">
@@ -955,6 +873,101 @@ export class GeekMagicPanel extends LitElement {
         </div>
       </ha-card>
     `;
+  }
+
+  private _renderPositionGrid(
+    currentSlot: number,
+    slotCount: number,
+    layout: string
+  ) {
+    // Determine grid dimensions based on layout
+    let cols = 2;
+    let rows = 2;
+    let isHero = false;
+
+    switch (layout) {
+      case "grid_2x2":
+        cols = 2;
+        rows = 2;
+        break;
+      case "grid_2x3":
+        cols = 2;
+        rows = 3;
+        break;
+      case "grid_3x2":
+        cols = 3;
+        rows = 2;
+        break;
+      case "hero":
+        cols = 3;
+        rows = 2;
+        isHero = true;
+        break;
+      case "split":
+        cols = 2;
+        rows = 1;
+        break;
+      case "three_column":
+        cols = 3;
+        rows = 1;
+        break;
+      default:
+        cols = 2;
+        rows = Math.ceil(slotCount / 2);
+    }
+
+    // Generate grid cells
+    const cells = [];
+
+    if (isHero) {
+      // Hero layout: slot 0 is the big hero, slots 1-3 are footer
+      cells.push(html`
+        <div
+          class="position-cell hero-main ${currentSlot === 0 ? "active" : ""}"
+          @click=${() => this._swapSlots(currentSlot, 0)}
+          title="Hero (main)"
+        ></div>
+      `);
+      for (let i = 1; i <= 3; i++) {
+        cells.push(html`
+          <div
+            class="position-cell ${currentSlot === i ? "active" : ""}"
+            @click=${() => this._swapSlots(currentSlot, i)}
+            title="Footer ${i}"
+          ></div>
+        `);
+      }
+    } else {
+      for (let i = 0; i < slotCount; i++) {
+        cells.push(html`
+          <div
+            class="position-cell ${currentSlot === i ? "active" : ""}"
+            @click=${() => this._swapSlots(currentSlot, i)}
+            title="Slot ${i + 1}"
+          ></div>
+        `);
+      }
+    }
+
+    return html`
+      <div class="position-grid cols-${cols}">${cells}</div>
+    `;
+  }
+
+  private _swapSlots(fromSlot: number, toSlot: number): void {
+    if (fromSlot === toSlot || !this._editingView) return;
+
+    const widgets = [...this._editingView.widgets];
+    const fromWidget = widgets.find((w) => w.slot === fromSlot);
+    const toWidget = widgets.find((w) => w.slot === toSlot);
+
+    // Swap slot assignments
+    if (fromWidget) fromWidget.slot = toSlot;
+    if (toWidget) toWidget.slot = fromSlot;
+
+    this._editingView = { ...this._editingView, widgets: [...widgets] };
+    this.requestUpdate();
+    this._refreshPreview();
   }
 }
 
