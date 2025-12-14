@@ -745,10 +745,6 @@ export class GeekMagicPanel extends LitElement {
     const widgetType = widget?.type || "";
     const schema = this._config.widget_types[widgetType];
 
-    // Debug logging
-    console.log(`Slot ${slot}: type="${widgetType}", widget=`, widget, "schema=", schema, "needs_entity=", schema?.needs_entity);
-    console.log(`  _editingView.widgets=`, this._editingView?.widgets);
-
     return html`
       <ha-card class="slot-card">
         <div class="card-content">
@@ -762,7 +758,6 @@ export class GeekMagicPanel extends LitElement {
                 const index = e.detail.index as number;
                 const keys = ["", ...Object.keys(this._config!.widget_types)];
                 const value = keys[index] || "";
-                console.log(`Widget select: index=${index}, keys=`, keys, `value="${value}"`);
                 this._updateWidget(slot, { type: value });
               }}
               @closed=${(e: Event) => e.stopPropagation()}
